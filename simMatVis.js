@@ -1,3 +1,4 @@
+//Some constants
 var mostGlobalMax = 0;
 var mostGlobalMin = 1;
 
