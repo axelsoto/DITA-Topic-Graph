@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+</style>
+<body>
+
+
+<table  cellspacing="5" cellpadding="1" class="table0">
+	<tr>
+		<td>
+		<fieldset>
+		<legend id="legendFirstColumn">Rand1</legend>
+		<table  cellspacing="1" cellpadding="1" class="tableA" style="width:100%">
+			<tr>
+				<td id="svgMethodA">
+				</td>
+			</tr>
+			<tr>
+				<td id="svgMethodA_metrics">
+				</td>
+			</tr>
+			<tr>
+				<td id="svgMethodA_wordCloud">
+				<svg width="500" height="5"></svg>
+				</td>
+			</tr>
+		</table>
+		</td>
+		</fieldset>
+		<td>
+			<table  cellspacing="1" cellpadding="1" class="tableB" style="width:100%">
+			<tr>
+				<td>
+				Overlap threshold
+				<input type="range" id="linkThresholdSlider" min="0" max="100" step="2.5" value="0">
+				<input id="linkThresholdValue" type="number" min="0" max="1" step="any">
+				</td>
+				<td>
+				<input type="checkbox" id="chkboxMarker" checked>Marker based on book<br>
+				<input type="checkbox" id="chkboxSize" checked>Size based on length <br>
+				<input type="checkbox" id="chkboxColor" checked>Color based on topic type
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<textarea id="searchTopic" name="annotationEntry" cols="35" rows="1" placeholder = 'Search topic'></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td id="tableTopicRetrieved" style='padding-left:15px;'>
+				</td>
+			</tr>
+		
+		</td>
+	</tr>
+	
+</table>
+<script src="./d3.v3.min.js"></script>
+<script src="./simMatVis.js"></script>
+<script src="./table.js"></script>
+<link href="./table.css" rel="stylesheet" type="text/css">
+<!--script type="text/javascript" src="./d3-cloud-master/d3.layout.cloud.js"></script-->
+<link rel="stylesheet" type="text/css" href="styles.css">
+</body>

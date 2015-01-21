@@ -1,0 +1,9 @@
+@font-face {
+font-family:digital-7;
+src: URL('digital-7.ttf'); 
+format ('ttf');
+}
+
+.sparsityNumber{
+font-family:digital-7;
+}

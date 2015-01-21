@@ -1,0 +1,86 @@
+#tableTopicRetrieved{
+	  width: 700px;
+	  height: 270px;
+	/*font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	//font-size: 12px;
+	//background: #fff;*/
+	
+	
+	margin: 45px;
+}
+
+.headerTable th {
+	//font-size: 14px;
+	font-weight: normal;
+	color: black;
+	//color: #039;
+	padding: 5px 8px 5px 8px;
+	border-bottom: 2px solid black;
+}
+
+.headerTable th.Id{
+	width: 10%;
+}
+
+.headerTable th.Boo{
+	width: 45%;
+}
+
+.headerTable th.Top{
+	width: 45%;
+}
+
+/*.headerTable th:hover {
+	//color: #009;
+	color: darkgray;
+}
+*/
+.bodyTable td {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	//font-size: 14px;
+	font-weight: normal;
+	color: black;
+	//color: #669;
+	//color: green;
+	padding: 9px 8px 0px 8px;
+	border-bottom: 2px solid black;
+
+}
+/*
+#tableTextContext .bodyTable tr.inFinalSelected td{ 
+	color: blue;
+}
+
+#tableTextContext .bodyTable tr.inFinalUnselected td{ 
+	color: lightblue;
+}
+
+#tableTextContext .bodyTable tr.selected td{ 
+	color: black;
+}
+
+#tableTextContext .bodyTable tr.unselected td{ 
+	color: lightgray;
+}
+*/
+.bodyTable td.Id {
+	width: 10%;
+	text-align: center;
+}
+.bodyTable td.Boo {
+	width: 45%;
+}
+
+.bodyTable td.Top {
+	width: 45%;
+}
+/*
+.bodyTable tr:hover {
+	color: #009;
+}
+*/
+.scroll {
+	overflow: auto;
+}
