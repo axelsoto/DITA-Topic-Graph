@@ -47,9 +47,22 @@
 				<input id="linkThresholdValue" type="number" min="0" max="1" step="any">
 				</td>
 				<td>
-				<input type="checkbox" id="chkboxMarker" checked>Marker based on book<br>
+				<input type="checkbox" id="chkboxColor" >Color based on book<br>
 				<input type="checkbox" id="chkboxSize" checked>Size based on length <br>
-				<input type="checkbox" id="chkboxColor" checked>Color based on topic type
+				<input type="checkbox" id="chkboxMarker" checked>Marker based on topic type
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Allowed topic-type connections
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<svg id="markerLegend">
+					</svg>
 				</td>
 			</tr>
 			<tr>
@@ -69,6 +82,7 @@
 <script src="./d3.v3.min.js"></script>
 <script src="./simMatVis.js"></script>
 <script src="./table.js"></script>
+<script src="./jquery-1.8.2.min.js"></script>
 <link href="./table.css" rel="stylesheet" type="text/css">
 <!--script type="text/javascript" src="./d3-cloud-master/d3.layout.cloud.js"></script-->
 <link rel="stylesheet" type="text/css" href="styles.css">

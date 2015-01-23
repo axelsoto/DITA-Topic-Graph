@@ -48,6 +48,26 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	
 	var thisObject = this;
 	
+	this.getNodes = function(){
+		return nodes;
+	}
+	
+	this.getCurrentThreshold = function(){
+		return currentThreshold;
+	}
+	
+	this.restartGraph = function(){
+		force.start();
+	}
+	/*this.incrementClickedNodes = function(){
+		nClickedNodes++;
+	}*/
+	
+	this.shiftClickNode = function(index){
+		nClickedNodes++;
+		nodeClicked[index] = true;
+	}
+	
 	function drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile){
 		var randNumb = Math.floor(Math.random() * 1000);
 		d3.text(similarityMatrixFile+ "?" + randNumb, function(datasetText) {
@@ -60,11 +80,13 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 					dictionaryTopic ={}
 					dictionaryBook ={}
 					dictionaryTopic["nTypes"] = 0;
+					listOfUniqueTopics = []
 					dictionaryBook["nTypes"] = 0;
 					topic_type.forEach(function(row){
 						if (dictionaryTopic[row[0]]==undefined){
 							dictionaryTopic[row[0]] = dictionaryTopic["nTypes"];
 							dictionaryTopic["nTypes"] = dictionaryTopic["nTypes"]+1;
+							listOfUniqueTopics.push(row[0]);
 						}
 					});
 					
@@ -154,7 +176,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 											return scaleSize(parseInt(topic_length[i][0]));
 										})
 										.type(function(d,i){
-											return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+											return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
 										})
 							)
 							.attr("transform",function(d){
@@ -162,7 +184,9 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							})
 							//.attr("r", function(d,i)
 							.style("fill", function(d,i) { 
-								return color(dictionaryTopic[topic_type[i][0]]);
+								//return color(dictionaryTopic[topic_type[i][0]]);
+								//return color(dictionaryBook[idBookTopic_name[i][1]]);
+								return color(0);
 							})
 							.call(drag)
 							.on("mousedown",function(d){
@@ -190,7 +214,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							
 						});
 
-						force.start();
+						//force.start();
 						//for (var i = 500; i > 0; --i) force.tick();
 						//force.stop();
 						
@@ -209,6 +233,9 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 						
 						listenerCheckBoxes();
 						
+						readyWithLoading();
+						drawMarkerLegend(listOfUniqueTopics);
+						
 						// }
 						// else{
 							// allFilesLoaded -=1;
@@ -218,6 +245,69 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 			});
 		});
 	}
+	
+	function drawMarkerLegend(listOfTopics){
+		//Needs to save unique topic names when reading from disk
+		var legendNode = d3.select("#markerLegend").selectAll(".legendNodes")
+						.data(listOfTopics);
+						
+		var groupOfLegend = legendNode.enter().append("g").attr("transform",function(d,i){
+					return "translate(" + 30 + "," + (i*30 +15) + ")";
+				});
+					
+		groupOfLegend.append("path")
+				.attr("class", "legendNode")
+				.attr("d", d3.svg.symbol()
+							.size("50")
+							.type(function(d,i){
+								return d3.svg.symbolTypes[i];
+							})
+				)				
+				//.attr("r", function(d,i)
+				.style("fill", function(d,i) { 
+					//return color(dictionaryTopic[topic_type[i][0]]);
+					//return color(dictionaryBook[idBookTopic_name[i][1]]);
+					return color(0);
+				})
+				.on("mousedown",function(d){
+					//;
+				});
+		
+		groupOfLegend.append("text")
+		.attr("dx","10px")
+		.attr("dy","5px")
+		.text(function(d){return d;});
+		
+		/*
+		groupOfLegend.append("image")
+		.attr("src","./checkbox.svg")
+		.attr("dx","40px");
+		*/
+		/*groupOfLegend[0].forEach(function(value,index){
+			d3.xml("./checkbox.svg", "image/svg+xml", function(xml) {
+				groupOfLegend[0][index].appendChild(xml.documentElement);
+			});
+		});*/
+		var groupOfLegend2 = legendNode.enter().append("g").attr("transform",function(d,i){
+					return "translate(" + 0 + "," + (i*30 +10) + "),scale(0.5)";
+				});
+		
+		groupOfLegend2.append("path")
+				.attr("class", "checkMark")
+				.attr("d", "M30.171,6.131l-0.858-0.858c-0.944-0.945-2.489-0.945-3.433,0L11.294,19.859l-5.175-5.174  c-0.943-0.944-2.489-0.944-3.432,0.001l-0.858,0.857c-0.943,0.944-0.943,2.489,0,3.433l7.744,7.75c0.944,0.945,2.489,0.945,3.433,0  L30.171,9.564C31.112,8.62,31.112,7.075,30.171,6.131z")
+				//.attr("r", function(d,i)
+				.style("fill", function(d,i) { 
+					//return color(dictionaryTopic[topic_type[i][0]]);
+					//return color(dictionaryBook[idBookTopic_name[i][1]]);
+					return "black";
+				})
+				.on("mousedown",function(d){
+					//d3.select(this);
+				});
+		
+		
+	}
+	
 	this.turnOffColors = function(){
 		svg.selectAll(".node")
 		.style("fill", function(){return color(0);});
@@ -225,7 +315,8 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	this.turnOnColors = function(){
 		svg.selectAll(".node")
 		.style("fill", function(d,i) { 
-				return color(dictionaryTopic[topic_type[i][0]]);
+				//return color(dictionaryTopic[topic_type[i][0]]);
+				return color(dictionaryBook[idBookTopic_name[i][1]]);
 		})
 	}
 	this.turnOffShapes = function(){
@@ -253,7 +344,8 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 			}
 		})
 		.type(function(d,i){
-						return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+						//return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+						return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
 				}));
 	}
 	
@@ -759,9 +851,30 @@ function rowClicked(obj,index,event){
 	});
 }
 
+function startingFromATopic(obj,topicIndex){
+	//Used to artificially applied a shift-click at the beginning which connects the graph using only one node
+	obj.shiftClickNode(topicIndex);
+	obj.filterEdges(obj.getCurrentThreshold());
+	obj.restartGraph();
+}
+
+function readyWithLoading(){
+	var patternToFind = /topic=\d+/;
+	if (patternToFind.test(window.location.href)){
+		var topicIndex = parseInt(patternToFind.exec(window.location.href)[0].split("=")[1]);
+		startingFromATopic(obj1,topicIndex);
+	}
+	
+}
+
+
 
 var obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"),'simMat.csv','topicNames.csv','topicTypes.csv','topicLengths.csv',"#legendFirstColumn","Topic Similarity");
 
 var allObjects = [obj1];
 
+
+
 listenerSearchTopic();
+
+
