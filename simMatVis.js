@@ -46,7 +46,14 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	var nodeClicked = [];
 	var scaleEdgeThickness;
 	
+	//Contains an object with all the different types of topics as attributes and whether they are selected or not as value
+	var allowedConnections = new Object;
+	
 	var thisObject = this;
+	
+	this.setCurrentThreshold = function(val){
+		currentThreshold = val;
+	}
 	
 	this.getNodes = function(){
 		return nodes;
@@ -87,6 +94,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							dictionaryTopic[row[0]] = dictionaryTopic["nTypes"];
 							dictionaryTopic["nTypes"] = dictionaryTopic["nTypes"]+1;
 							listOfUniqueTopics.push(row[0]);
+							allowedConnections[row[0]]=true;
 						}
 					});
 					
@@ -201,11 +209,10 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							.text(function(d) { return d.name;});
 
 						force.on("tick", function() {
-							//node.attr("cx", function(d) { return d.x = d3.max([d3.min([d.x,width-20]),20]); })
-							 //.attr("cy", function(d) { return d.y = d3.max([d3.min([d.y,height-20]),20]); })
-							 d.x = d3.max([d3.min([d.x,width-20]),20]);
-							 d.y = d3.max([d3.min([d.y,height-20]),20]);
-							 node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+							node.attr("transform", function(d) {
+								d.x = d3.max([d3.min([d.x,width-20]),20]);
+								d.y = d3.max([d3.min([d.y,height-20]),20]);
+								return "translate(" + d.x + "," + d.y + ")"; });
 								
 							link.attr("x1", function(d) { return d.source.x; })
 								.attr("y1", function(d) { return d.source.y; })
@@ -214,9 +221,9 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							
 						});
 
-						//force.start();
-						//for (var i = 500; i > 0; --i) force.tick();
-						//force.stop();
+						force.start();
+						for (var i = 1; i > 0; --i) force.tick();
+						force.stop();
 						
 						initMetrics();
 						// if (mostGlobalMax < globalMax){
@@ -251,9 +258,23 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		var legendNode = d3.select("#markerLegend").selectAll(".legendNodes")
 						.data(listOfTopics);
 						
-		var groupOfLegend = legendNode.enter().append("g").attr("transform",function(d,i){
-					return "translate(" + 30 + "," + (i*30 +15) + ")";
-				});
+		var groupOfLegend = legendNode.enter()
+							.append("g")
+							.attr("cursor","pointer")
+							.attr("transform",function(d,i){
+								return "translate(" + 30 + "," + (i*30 +15) + ")";
+							})
+							.on("mousedown",function(d,i){
+								if (allowedConnections[d]){
+									opacityCheckMark(i,0);
+									allowedConnections[d]=false;
+								}
+								else{
+									opacityCheckMark(i,1);
+									allowedConnections[d]=true;
+								}
+								thisObject.filterEdges(currentThreshold);
+							});
 					
 		groupOfLegend.append("path")
 				.attr("class", "legendNode")
@@ -268,10 +289,8 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 					//return color(dictionaryTopic[topic_type[i][0]]);
 					//return color(dictionaryBook[idBookTopic_name[i][1]]);
 					return color(0);
-				})
-				.on("mousedown",function(d){
-					//;
 				});
+				
 		
 		groupOfLegend.append("text")
 		.attr("dx","10px")
@@ -288,9 +307,41 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 				groupOfLegend[0][index].appendChild(xml.documentElement);
 			});
 		});*/
-		var groupOfLegend2 = legendNode.enter().append("g").attr("transform",function(d,i){
-					return "translate(" + 0 + "," + (i*30 +10) + "),scale(0.5)";
+		
+		var groupOfLegend2 = legendNode.enter()
+							.append("g")
+							.attr("class","checkBoxGroup")
+							.attr("cursor","pointer")
+							.attr("transform",function(d,i){
+								return "translate(" + 0 + "," + (i*30 +5) + "),scale(0.5)";
+							})
+							.on("mousedown",function(d,i){
+								if (allowedConnections[d]){
+									opacityCheckMark(i,0);
+									allowedConnections[d]=false;
+								}
+								else{
+									opacityCheckMark(i,1);
+									allowedConnections[d]=true;
+								}
+								thisObject.filterEdges(currentThreshold);
+							});		
+		
+		groupOfLegend2.append("rect")
+				.attr("class", "emptyCheckMark")
+				.attr("x","0")
+				.attr("y","5")
+				.attr("width","25")
+				.attr("height","25")
+				.attr("rx","5")
+				.attr("ry","5")
+				.style("fill","white")
+				.style("stroke", function(d,i) { 
+					//return color(dictionaryTopic[topic_type[i][0]]);
+					//return color(dictionaryBook[idBookTopic_name[i][1]]);
+					return "black";
 				});
+
 		
 		groupOfLegend2.append("path")
 				.attr("class", "checkMark")
@@ -300,14 +351,23 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 					//return color(dictionaryTopic[topic_type[i][0]]);
 					//return color(dictionaryBook[idBookTopic_name[i][1]]);
 					return "black";
-				})
-				.on("mousedown",function(d){
-					//d3.select(this);
 				});
-		
-		
+				
 	}
 	
+	function opacityCheckMark(index,opacity){
+		d3.select("#markerLegend")
+			.selectAll(".checkMark")
+			.filter(function(d,i){
+				if (i==index){
+					return true;
+				}
+				else{
+					return false;
+				}
+			})
+			.style("opacity",opacity);
+	}
 	this.turnOffColors = function(){
 		svg.selectAll(".node")
 		.style("fill", function(){return color(0);});
@@ -381,17 +441,20 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	}
 	
 	this.filterEdges = function(threshold){
-		currentThreshold = threshold;
+		//currentThreshold = threshold;
 		currentWeights = [];
-console.log("1")
+
 		weights.forEach(function (elem){
 			if (parseFloat(elem.value)>=threshold){
+				//Check that if there is any shift-clicked nodes, to be connecting one of these
 				if ((nClickedNodes == 0)||((nodeClicked[elem.source.index] || nodeClicked[elem.target.index]))){
-					currentWeights.push(elem);
+					if ((allowedConnections[topic_type[elem.source.index]])&&(allowedConnections[topic_type[elem.target.index]])){
+						currentWeights.push(elem);
+					}
 				}
 			}
 		});
-console.log("2")
+
 		var link = svg.selectAll(".all_links").selectAll(".link").data(currentWeights)
 		.style("stroke-width", function(d) { return scaleEdgeThickness(d.value); });
 
@@ -402,8 +465,6 @@ console.log("2")
 		link.exit().remove();
 		
 		var node = svg.selectAll(".node");
-console.log("3")
-		
 		
 		force.on("tick", function() {
 				//node.attr("cx", function(d) { return d.x = d3.max([d3.min([d.x,width-20]),20]); })
@@ -658,6 +719,10 @@ function listenerLinkThresholdSlider(initValue){
 	//Set threshold value to initValue in the slider
 	d3.select("#linkThresholdSlider")[0][0].value = scaleLinkThreshold.invert(initValue);
 	
+	allObjects.forEach(function(elem){
+				elem.setCurrentThreshold(parseFloat(initValue).toFixed(4));
+			});
+	
 	d3.select("#linkThresholdSlider")
 	.on("change", function(){
 		//Get value from slider
@@ -665,6 +730,7 @@ function listenerLinkThresholdSlider(initValue){
 		
 		//Filter edges on all graphs
 		allObjects.forEach(function(elem){
+				elem.setCurrentThreshold(scaleLinkThreshold(parseFloat(linkThresholdSliderValue)));
 				elem.filterEdges(scaleLinkThreshold(parseFloat(linkThresholdSliderValue)));
 			});
 		
@@ -679,13 +745,16 @@ function listenerLinkThresholdValue(initialValue){
 		if ((value<=1)&&(value>0)){
 			d3.select("#linkThresholdSlider")[0][0].value = scaleLinkThreshold.invert(value);
 			allObjects.forEach(function(elem){
+				elem.setCurrentThreshold(value);
 				elem.filterEdges(parseFloat(value));
 			});
 		}
 	});
+	/*
 	allObjects.forEach(function(elem){
 		elem.filterEdges(parseFloat(initialValue));
 	});
+	*/
 }
 
 function listenerCheckBoxes(){
@@ -863,6 +932,9 @@ function readyWithLoading(){
 	if (patternToFind.test(window.location.href)){
 		var topicIndex = parseInt(patternToFind.exec(window.location.href)[0].split("=")[1]);
 		startingFromATopic(obj1,topicIndex);
+	}
+	else{
+		obj1.filterEdges(obj1.getCurrentThreshold);
 	}
 	
 }
