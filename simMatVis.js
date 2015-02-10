@@ -702,6 +702,30 @@ console.log("topichovEnd")
 		  }
 	}
 	
+	this.collectCenterAndNeighbors = function(){
+		output = {center: 0, listOfNeighbors: []}
+		var allNodes =[]
+		currentWeights.forEach(function(elem){
+			
+			if (allNodes.indexOf(elem.source.index)==-1){
+				allNodes.push(elem.source.index);
+			}
+			else{
+				output.center = elem.source.index;
+			}
+			if (allNodes.indexOf(elem.target.index)==-1){
+				allNodes.push(elem.target.index);
+			}
+			else{
+				output.center = elem.target.index;
+			}
+		})
+		var indexCenter = allNodes.indexOf(output.center);
+		allNodes.splice(indexCenter,1)
+		output.listOfNeighbors = allNodes.slice(0);
+		return output;
+	}
+	
 	//Add top legend
 	d3.select(legendSelection).text(legendText);
 	
@@ -902,6 +926,23 @@ function drawBigHighlightedElement(obj,index){
 			obj.highlightNeighbors(d,this);
 		}
 	});
+}
+
+function callTextComparison(){
+	//get main and neighbor nodes
+	centerNeighbors = obj1.collectCenterAndNeighbors();
+	var stringOfNeighbors = "(";
+	centerNeighbors.listOfNeighbors.forEach(function(elem,index,array){
+		if ((index+1)==array.length){
+			stringOfNeighbors = stringOfNeighbors + elem;
+		}
+		else{
+			stringOfNeighbors = stringOfNeighbors + elem + ",";
+		}
+	})
+	stringOfNeighbors= stringOfNeighbors + ")"
+	var win = window.open('../Visualization/multiple.html?topic=' + centerNeighbors.center + "neighbors=" + stringOfNeighbors , '_blank');
+	win.focus();
 }
 
 function removeBigHighlightedElement(obj,index){
