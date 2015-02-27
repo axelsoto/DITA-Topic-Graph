@@ -28,10 +28,12 @@
 			</tr>
 			<tr>
 				<td id="svgMethodA_metrics">
+				<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="graphHelp()">
 				</td>
 			</tr>
 			<tr>
 				<td id="svgMethodA_wordCloud">
+				
 				<svg width="500" height="5"></svg>
 				</td>
 			</tr>
@@ -39,22 +41,25 @@
 		</td>
 		</fieldset>
 		<td>
-			<table  cellspacing="1" cellpadding="1" class="tableB" style="width:100%">
+			<table cellspacing="1" cellpadding="1" class="tableB" style="width:100%">
 			<tr>
 				<td>
-				Overlap threshold
+				Similarity threshold
 				<input type="range" id="linkThresholdSlider" min="0" max="100" step="2.5" value="0">
 				<input id="linkThresholdValue" type="number" min="0" max="1" step="any">
+				<input type=image src="./images/help.png" width="25" height="25" onclick="thresholdHelp()">
 				</td>
 				<td>
-				<input type="checkbox" id="chkboxColor" >Color based on book<br>
+				<input style="visibility:hidden" type="checkbox" id="chkboxColor" ><!--Color based on book--><br> 
 				<input type="checkbox" id="chkboxSize" checked>Size based on length <br>
 				<input type="checkbox" id="chkboxMarker" checked>Marker based on topic type
+				<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="checkboxHelp()">
 				</td>
 			</tr>
 			<tr>
 				<td>
 					Allowed topic-type connections
+					<input type=image src="./images/help.png" width="25" height="25" onclick="topicTypeHelp()">
 				</td>
 				<td>
 					<button type="button" onclick="callTextComparison()">Compare</button>
@@ -66,19 +71,30 @@
 					</svg>
 				</td>
 			</tr>
+			</table>
+			<fieldset>
+			<legend >Topic search</legend>
+			<table cellspacing="1" cellpadding="1" class="tableB" style="width:100%">
 			<tr>
 				<td>
 					<textarea id="searchTopic" name="annotationEntry" cols="35" rows="1" placeholder = 'Search topic'></textarea>
+					<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="topicSearchHelp()">
 				</td>
 			</tr>
 			<tr>
 				<td id="tableTopicRetrieved" style='padding-left:15px;'>
 				</td>
 			</tr>
-		
+			</table>
+			</fieldset>
 		</td>
 	</tr>
-	
+</table>
+<table>
+	<tr>
+		<td id="help">
+		</td>
+	</tr>
 </table>
 <script src="./d3.v3.min.js"></script>
 <script src="./simMatVis.js"></script>

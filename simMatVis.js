@@ -4,18 +4,18 @@ var mostGlobalMin = 1;
 
 initialSparsity = 0.9
 unDirect = true;
-containRowId = 1;//0 if there is no row index; 1 otherwise
+containRowId = 0;//0 if there is column header; 1 otherwise
 
 var widthTable = 700;
 var heightTable = 270;
 
 function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile,legendSelection,legendText){
 
-	var width = 800,
+	var width = 600,
 		height = 500;
 		
-	var widthGraphMetrics = 800,
-		heightGraphMetrics = 80;
+	var widthGraphMetrics = 600,
+		heightGraphMetrics = 5;//80
 
 	var color = d3.scale.category20();
 
@@ -52,7 +52,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	var thisObject = this;
 	
 	this.setCurrentThreshold = function(val){
-		currentThreshold = val;
+		currentThreshold = parseFloat(val);
 	}
 	
 	this.getNodes = function(){
@@ -60,7 +60,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	}
 	
 	this.getCurrentThreshold = function(){
-		return currentThreshold;
+		return parseFloat(currentThreshold);
 	}
 	
 	this.restartGraph = function(){
@@ -73,6 +73,10 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	this.shiftClickNode = function(index){
 		nClickedNodes++;
 		nodeClicked[index] = true;
+	}
+	
+	this.getCurrentEdges = function(){
+		return currentWeights;
 	}
 	
 	function drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile){
@@ -143,7 +147,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 
 						currentWeights = weights.slice(0);
 						var scaleDist = d3.scale.linear()
-									.domain([1-globalMax,1-globalMin])
+									.domain([globalMax,globalMin])
 									.range([10,250]);
 									
 						scaleEdgeThickness = d3.scale.linear()
@@ -151,15 +155,15 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 									.range([0.5,3]);
 									
 						scaleSize = d3.scale.linear()
-									.domain([10,200])
-									.range([50,200]);
+									.domain([200,10000])
+									.range([50,200]).clamp(true);
 						force
 						.nodes(nodes)
 						.links(weights)
 						.friction(0.3)
 						.linkDistance(function(link, index){
 							//console.log(link.value)
-							return scaleDist(1-link.value);
+							return scaleDist(link.value);
 						});
 						//force.start();
 
@@ -225,7 +229,11 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 						for (var i = 1; i > 0; --i) force.tick();
 						force.stop();
 						
+						/*
+						//This shows a dashboard-type number with the current graph density which perhaps is not very useful
 						initMetrics();
+						*/
+						
 						// if (mostGlobalMax < globalMax){
 							mostGlobalMax = globalMax;
 						// }
@@ -242,6 +250,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 						
 						readyWithLoading();
 						drawMarkerLegend(listOfUniqueTopics);
+						listenerSearchTopic();
 						
 						// }
 						// else{
@@ -395,18 +404,18 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	this.turnOnShapes = function(){
 		svg.selectAll(".node")
 		.attr("d", d3.svg.symbol()
-		.size(function(d,i){
-			if (d3.select("#chkboxSize")[0][0].checked){
-				return scaleSize(parseInt(topic_length[i][0]));
-			}
-			else{
-				return scaleSize.range()[0];
-			}
-		})
-		.type(function(d,i){
-						//return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
-						return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
-				}));
+			.size(function(d,i){
+				if (d3.select("#chkboxSize")[0][0].checked){
+					return scaleSize(parseInt(topic_length[i][0]));
+				}
+				else{
+					return scaleSize.range()[0];
+				}
+			})
+			.type(function(d,i){
+					//return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+					return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
+			}));
 	}
 	
 	this.turnOffSize = function(){
@@ -414,7 +423,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		.attr("d", d3.svg.symbol()
 			.type(function(d,i){
 				if (d3.select("#chkboxMarker")[0][0].checked){
-						return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+						return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
 				}
 				else{
 						return d3.svg.symbolTypes[0];
@@ -424,12 +433,13 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 					return scaleSize.range()[0];
 			}));
 	}
+	
 	this.turnOnSize = function(){
 		svg.selectAll(".node")
 		.attr("d", d3.svg.symbol()
 			.type(function(d,i){
 				if (d3.select("#chkboxMarker")[0][0].checked){
-						return d3.svg.symbolTypes[dictionaryBook[idBookTopic_name[i][1]]];
+						return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
 				}
 				else{
 						return d3.svg.symbolTypes[0];
@@ -481,13 +491,16 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 			  });
 		force.links(currentWeights);
 		//.start();
-console.log("4")
+
 		force.start();
 		for (var i = 1; i > 0; --i) force.tick();
 		force.stop();
-console.log("5")
+		
+		/*
+		//This shows a dashboard-type number with the current graph density which perhaps is not very useful
 		updateMetrics();
-console.log("6")
+		*/
+
 	}
 
 
@@ -702,27 +715,45 @@ console.log("topichovEnd")
 		  }
 	}
 	
-	this.collectCenterAndNeighbors = function(){
-		output = {center: 0, listOfNeighbors: []}
-		var allNodes =[]
+	this.collectCenterAndNeighbors = function(maxNeighbors){
+		output = {center: -99, listOfNeighbors: [], error: false};
+		var allNodes = [];
+		var allValues = [];
 		currentWeights.forEach(function(elem){
 			
 			if (allNodes.indexOf(elem.source.index)==-1){
 				allNodes.push(elem.source.index);
 			}
 			else{
-				output.center = elem.source.index;
+				if ((output.center == -99) || (output.center == elem.source.index)){
+					output.center = elem.source.index;
+				}
+				else{
+					output.error = true;
+				}
 			}
 			if (allNodes.indexOf(elem.target.index)==-1){
 				allNodes.push(elem.target.index);
 			}
 			else{
-				output.center = elem.target.index;
+				if ((output.center == -99) || (output.center == elem.target.index)){
+					output.center = elem.target.index;
+				}
+				else{
+					output.error = true;
+				}
 			}
+			allValues.push(elem.value);
 		})
 		var indexCenter = allNodes.indexOf(output.center);
 		allNodes.splice(indexCenter,1)
-		output.listOfNeighbors = allNodes.slice(0);
+		
+		indices = d3.range(allNodes.length);
+		indices.sort(function (a, b) { return allValues[a] < allValues[b] ? 1 : allValues[a] > allValues[b] ? -1 : 0; });
+		
+		for (var q=0;q<d3.max([maxNeighbors,allNodes.length]);q++){
+			output.listOfNeighbors.push(allNodes.slice(indices[q], indices[q] + 1));
+		}
 		return output;
 	}
 	
@@ -739,7 +770,7 @@ function listenerLinkThresholdSlider(initValue){
 					.range([parseFloat(mostGlobalMin),parseFloat(mostGlobalMax)]);
 	
 	//Set threshold value to initValue in the text area
-	d3.select("#linkThresholdValue").attr("value",parseFloat(initValue).toFixed(4));
+	d3.select("#linkThresholdValue")[0][0].value = parseFloat(initValue).toFixed(4);
 	//Set threshold value to initValue in the slider
 	d3.select("#linkThresholdSlider")[0][0].value = scaleLinkThreshold.invert(initValue);
 	
@@ -759,14 +790,15 @@ function listenerLinkThresholdSlider(initValue){
 			});
 		
 		//Set threshold value in the text area
-		d3.select("#linkThresholdValue").attr("value",parseFloat(scaleLinkThreshold(linkThresholdSliderValue)).toFixed(4));
+		d3.select("#linkThresholdValue")[0][0].value = parseFloat(scaleLinkThreshold(linkThresholdSliderValue)).toFixed(4);
 	});
 }
 function listenerLinkThresholdValue(initialValue){
 	d3.select("#linkThresholdValue")
 	.on("change", function(){
 		var value = parseFloat(this.value);
-		if ((value<=1)&&(value>0)){
+		//if ((value<=1)&&(value>0)){
+		if (true){
 			d3.select("#linkThresholdSlider")[0][0].value = scaleLinkThreshold.invert(value);
 			allObjects.forEach(function(elem){
 				elem.setCurrentThreshold(value);
@@ -832,6 +864,7 @@ function listenerSearchTopic(){
 			searchTopicName(this.value);
 			//this.value="";
 		})
+		searchTopicName("")
 		/*.on("keypress", function() {
 			if ((this.value!="")&&(window.event.keyCode==13)){
 				window.event.preventDefault();
@@ -930,19 +963,41 @@ function drawBigHighlightedElement(obj,index){
 
 function callTextComparison(){
 	//get main and neighbor nodes
-	centerNeighbors = obj1.collectCenterAndNeighbors();
-	var stringOfNeighbors = "(";
-	centerNeighbors.listOfNeighbors.forEach(function(elem,index,array){
-		if ((index+1)==array.length){
-			stringOfNeighbors = stringOfNeighbors + elem;
+	centerNeighbors = obj1.collectCenterAndNeighbors(5);
+	if (centerNeighbors.error){
+		alert("To run the comparison, there must be only a single topic connected to one or more topics (use <shift> + click on a node to look at the neighbors of a topic)")
+	}
+	else{
+		var stringOfNeighbors = "(";
+		centerNeighbors.listOfNeighbors.forEach(function(elem,index,array){
+			if ((index+1)==array.length){
+				stringOfNeighbors = stringOfNeighbors + elem;
+			}
+			else{
+				stringOfNeighbors = stringOfNeighbors + elem + ",";
+			}
+		})
+		stringOfNeighbors= stringOfNeighbors + ")";
+		
+		var book, similarity;
+		var patternToFind = /book=(\w+)/;
+		if (patternToFind.test(window.location.href)){
+			book = patternToFind.exec(window.location.href)[1];
 		}
 		else{
-			stringOfNeighbors = stringOfNeighbors + elem + ",";
+			book = 'None'
 		}
-	})
-	stringOfNeighbors= stringOfNeighbors + ")"
-	var win = window.open('../Visualization/multiple.html?topic=' + centerNeighbors.center + "neighbors=" + stringOfNeighbors , '_blank');
-	win.focus();
+		var patternToFind = /similarity=(\w+)/;
+		if (patternToFind.test(window.location.href)){
+			similarity = patternToFind.exec(window.location.href)[1];
+		}
+		else{
+			alert('Similarity not known')
+		}
+		
+		var win = window.open('../Visualization/multiple.html?book='+ book + ',topic=' + centerNeighbors.center + ",neighbors=" + stringOfNeighbors + ',similarity=' + similarity, '_blank');
+		win.focus();
+	}
 }
 
 function removeBigHighlightedElement(obj,index){
@@ -975,19 +1030,82 @@ function readyWithLoading(){
 		startingFromATopic(obj1,topicIndex);
 	}
 	else{
-		obj1.filterEdges(obj1.getCurrentThreshold);
+		obj1.filterEdges(obj1.getCurrentThreshold());
 	}
 	
 }
 
+function readInput(){
+	var patternToFind = /book=(\w+)/;
+	
+	var similarity;
+	var patternToFind2 = /similarity=(\w+)/;
+	if (patternToFind2.test(window.location.href)){
+		similarity = patternToFind2.exec(window.location.href)[1];
+	}
+	else{
+		similarity = 'None'
+	}
+	
+	if (patternToFind.test(window.location.href)){
+		var subDir = './Data/';
+		if (patternToFind.exec(window.location.href)[1]=='VSP4000'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='VSP8200'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='CORDAPContentDeveloper'){
+			subDir = subDir + 'CORDAPContDev/'
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='CORDAPProductOwner'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='CORDAPReviewer'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='CORDAPSystemAdmin'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='Movious'){
+			
+		}
+		else if (patternToFind.exec(window.location.href)[1]=='NonClientSpecific'){
+			
+		}
+		else{
+			alert('Wrong input');
+		}
+		obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"), subDir + 'simMatrix_' + similarity + '_thres5_aggregmax_normFunzScore_normRefmatrix',subDir + 'idBookTopic', subDir + 'topicLabels', subDir + 'topicLengths',"#legendFirstColumn","Topic Similarity");
+	}
+	else{
+		alert('Wrong input');
+	}
+	
+}
 
+function graphHelp(){
+	d3.select("#help").html("Topic similarity graph: shift-click on a topic to focus on its most similar topics. Shift-click again for undoing the focusing.")
+}
+function thresholdHelp(){
+	d3.select("#help").html("Similarity threshold: adjust the threshold to reduce or increase the number of similarity relationships to be shown. A value of 0 represents an average similarity value.")
+}
+function checkboxHelp(){
+	d3.select("#help").html('Size checkbox: turns on/off whether the marker size in the graph is proportional to topic length or not.<br>Marker checkbox: turns on/off whether the marker shape in the graph is associated to the topic type or not.<br> Click "Compare" to see visualize the text of a topic with those of their closest neighbors (there must be only a single topic connected to one or more topics).')
+}
+function topicTypeHelp(){
+	d3.select("#help").html("Topic type checkboxes: forces connections in the graph to be between checked topic types only.")
+}
+function topicSearchHelp(){
+	d3.select("#help").html("Topic search: enter a query and press <Tab> to retrieve topics containing the entered string. Hover the mouse over the table to identify the topic in the graph.")
+}
 
-var obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"),'simMat.csv','topicNames.csv','topicTypes.csv','topicLengths.csv',"#legendFirstColumn","Topic Similarity");
+//var obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"),'simMat.csv','topicNames.csv','topicTypes.csv','topicLengths.csv',"#legendFirstColumn","Topic Similarity");
 
+readInput();
 var allObjects = [obj1];
 
 
-
-listenerSearchTopic();
 
 
