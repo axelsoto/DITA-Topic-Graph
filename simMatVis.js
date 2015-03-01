@@ -9,7 +9,20 @@ containRowId = 0;//0 if there is column header; 1 otherwise
 var widthTable = 700;
 var heightTable = 270;
 
-function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile,legendSelection,legendText){
+var topicFileExtension = ".dita";
+
+String.prototype.trim = function() {
+return this.replace(/^\s*|\s*$/g, "")
+}
+String.prototype.ltrim = function() {
+return this.replace(/^\s*/g, "")
+}
+String.prototype.rtrim = function() {
+return this.replace(/\s*$/g, "")
+}
+
+
+function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile,adjacencyReuseFile,legendSelection,legendText){
 
 	var width = 600,
 		height = 500;
@@ -79,7 +92,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		return currentWeights;
 	}
 	
-	function drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile){
+	function drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile,adjacencyReuseFile){
 		var randNumb = Math.floor(Math.random() * 1000);
 		d3.text(similarityMatrixFile+ "?" + randNumb, function(datasetText) {
 			var similarityMatrix = d3.csv.parseRows(datasetText);
@@ -87,175 +100,238 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 				idBookTopic_name = d3.csv.parseRows(datasetText);
 				d3.text(topicTypeFile + "?" + randNumb, function(datasetText) {
 					topic_type = d3.csv.parseRows(datasetText);
-					//Building dictionaryTopic for matching a topic type with a number
-					dictionaryTopic ={}
-					dictionaryBook ={}
-					dictionaryTopic["nTypes"] = 0;
-					listOfUniqueTopics = []
-					dictionaryBook["nTypes"] = 0;
-					topic_type.forEach(function(row){
-						if (dictionaryTopic[row[0]]==undefined){
-							dictionaryTopic[row[0]] = dictionaryTopic["nTypes"];
-							dictionaryTopic["nTypes"] = dictionaryTopic["nTypes"]+1;
-							listOfUniqueTopics.push(row[0]);
-							allowedConnections[row[0]]=true;
-						}
-					});
+					d3.json(adjacencyReuseFile+ "?" + randNumb, function(error,datasetText) {
+						var adjacencyReuse = eval('('+ datasetText + ')');
 					
-					idBookTopic_name.forEach(function(row){
-						if (dictionaryBook[row[1]]==undefined){
-							dictionaryBook[row[1]] = dictionaryBook["nTypes"];
-							dictionaryBook["nTypes"] = dictionaryBook["nTypes"]+1;
-						}
-					});
-					
-					d3.text(topicLengthFile + "?" + randNumb, function(datasetText) {
-						topic_length = d3.csv.parseRows(datasetText);
-						nodes = [];
-						weights = [];
-						valueArray = [];
-						var globalMax = 0;
-						var globalMin = 1;
-						var rowIndex = 0;
-						similarityMatrix.forEach(function(row){
-							var colIndex = 0;
-							row.forEach(function(value){
-								value = parseFloat(value);
-								if ((colIndex>0)&&(value !=0)&&(((colIndex-containRowId)>rowIndex)|| !unDirect)){
-									//Skip the first column that contains the index
-									var contentLink = new Object();
-									
-									contentLink.source = rowIndex;
-									contentLink.target = colIndex-containRowId;
+						//Building dictionaryTopic for matching a topic type with a number
+						dictionaryTopic ={}
+						dictionaryBook ={}
+						dictionaryTopic["nTypes"] = 0;
+						listOfUniqueTopics = []
+						dictionaryBook["nTypes"] = 0;
+						topic_type.forEach(function(row){
+							if (dictionaryTopic[row[0]]==undefined){
+								dictionaryTopic[row[0]] = dictionaryTopic["nTypes"];
+								dictionaryTopic["nTypes"] = dictionaryTopic["nTypes"]+1;
+								listOfUniqueTopics.push(row[0]);
+								allowedConnections[row[0]]=true;
+							}
+						});
+						
+						dictionaryTopicNameNumber ={}
+						idBookTopic_name.forEach(function(row){
+							if (dictionaryBook[row[1]]==undefined){
+								dictionaryBook[row[1]] = dictionaryBook["nTypes"];
+								dictionaryBook["nTypes"] = dictionaryBook["nTypes"]+1;
+							}
+							if (dictionaryTopicNameNumber[row[2].trim()]==undefined){
+								dictionaryTopicNameNumber[row[2].trim()] = row[0];
+							}
+						});
+						
+						d3.text(topicLengthFile + "?" + randNumb, function(datasetText) {
+							topic_length = d3.csv.parseRows(datasetText);
+							nodes = [];
+							weights = [];
+							valueArray = [];
+							var globalMax = 0;
+							var globalMin = 1;
+							var rowIndex = 0;
+							similarityMatrix.forEach(function(row){
+								var colIndex = 0;
+								row.forEach(function(value){
+									value = parseFloat(value);
+									if ((colIndex>0)&&(value !=0)&&(((colIndex-containRowId)>rowIndex)|| !unDirect)){
+										//Skip the first column that contains the index
+										var contentLink = new Object();
+										
+										contentLink.source = rowIndex;
+										contentLink.target = colIndex-containRowId;
 
-									if (typeof value =="number"){
-										contentLink.value = value;
+										if (typeof value =="number"){
+											contentLink.value = value;
+										}
+										else{console.log("error!")}
+										
+										if (value > globalMax) globalMax = value;
+										if (value < globalMin) globalMin = value;
+										weights.push(contentLink);
+										valueArray.push(value);
 									}
-									else{console.log("error!")}
-									
-									if (value > globalMax) globalMax = value;
-									if (value < globalMin) globalMin = value;
-									weights.push(contentLink);
-									valueArray.push(value);
-								}
-								colIndex = colIndex + 1;
+									colIndex = colIndex + 1;
+								});
+								nodes.push({"name":"Topic " + parseInt(rowIndex)+" - Book: "+idBookTopic_name[rowIndex][1] + " - Topic: " + idBookTopic_name[rowIndex][2] + " (type: " + topic_type[rowIndex][0] + ")","x":width/2+Math.floor(Math.random() * 100)-50,"y":height/2+Math.floor(Math.random() * 100)-50});
+								nodeClicked[rowIndex] = false;
+								rowIndex = rowIndex + 1;
 							});
-							nodes.push({"name":"Topic " + parseInt(rowIndex)+" - Book: "+idBookTopic_name[rowIndex][1] + " - Topic: " + idBookTopic_name[rowIndex][2] + " (type: " + topic_type[rowIndex][0] + ")","x":width/2+Math.floor(Math.random() * 100)-50,"y":height/2+Math.floor(Math.random() * 100)-50});
-							nodeClicked[rowIndex] = false;
-							rowIndex = rowIndex + 1;
-						});
 
-						currentWeights = weights.slice(0);
-						var scaleDist = d3.scale.linear()
-									.domain([globalMax,globalMin])
-									.range([10,250]);
-									
-						scaleEdgeThickness = d3.scale.linear()
-									.domain([globalMin,globalMax])
-									.range([0.5,3]);
-									
-						scaleSize = d3.scale.linear()
-									.domain([200,10000])
-									.range([50,200]).clamp(true);
-						force
-						.nodes(nodes)
-						.links(weights)
-						.friction(0.3)
-						.linkDistance(function(link, index){
-							//console.log(link.value)
-							return scaleDist(link.value);
-						});
-						//force.start();
+							currentWeights = weights.slice(0);
+							var scaleDist = d3.scale.linear()
+										.domain([globalMax,globalMin])
+										.range([10,250]);
+										
+							scaleEdgeThickness = d3.scale.linear()
+										.domain([globalMin,globalMax])
+										.range([0.5,3]);
+										
+							scaleSize = d3.scale.linear()
+										.domain([200,10000])
+										.range([50,200]).clamp(true);
+							force
+							.nodes(nodes)
+							.links(weights)
+							.friction(0.3)
+							.linkDistance(function(link, index){
+								//console.log(link.value)
+								return scaleDist(link.value);
+							});
+							//force.start();
 
-						
-						var link = svg.append("g").attr("class","all_links").selectAll(".link")
-							.data(weights)
-							.enter().append("line")
-							.attr("class", "link")
-							.style("stroke-width", function(d) { return scaleEdgeThickness(d.value); });
-
-						drag = force.drag();
-						//.on("dragstart",dragInit)
-						//.on("dragend",dragFinish);
-						
-						var node = svg.append("g").attr("class","all_nodes").selectAll(".node")
-							.data(nodes)
-							//.enter().append("circle")
-							.enter().append("path")
-							.attr("class", "node")
-							.attr("d", d3.svg.symbol()
-										.size(function(d,i){
-											return scaleSize(parseInt(topic_length[i][0]));
-										})
-										.type(function(d,i){
-											return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
-										})
-							)
-							.attr("transform",function(d){
-								return "translate(" + d.x + "," + d.y + ")";
-							})
-							//.attr("r", function(d,i)
-							.style("fill", function(d,i) { 
-								//return color(dictionaryTopic[topic_type[i][0]]);
-								//return color(dictionaryBook[idBookTopic_name[i][1]]);
-								return color(0);
-							})
-							.call(drag)
-							.on("mousedown",function(d){
-								thisObject.topicClicked(d,d3.event)
-							})
-							.on("mouseup",topicReleased)
-							.on("mouseover",topicHovered)
-							.on("mouseout",topicHoveredEnd);
-
-
-						node.append("title")
-							.text(function(d) { return d.name;});
-
-						force.on("tick", function() {
-							node.attr("transform", function(d) {
-								d.x = d3.max([d3.min([d.x,width-20]),20]);
-								d.y = d3.max([d3.min([d.y,height-20]),20]);
-								return "translate(" + d.x + "," + d.y + ")"; });
-								
-							link.attr("x1", function(d) { return d.source.x; })
-								.attr("y1", function(d) { return d.source.y; })
-								.attr("x2", function(d) { return d.target.x; })
-								.attr("y2", function(d) { return d.target.y; });
 							
-						});
+							var link = svg.append("g").attr("class","all_links").selectAll(".link")
+								.data(weights)
+								.enter().append("line")
+								.attr("class", "link")
+								.style("stroke-width", function(d) { return scaleEdgeThickness(d.value); });
+							
+							// build the arrow.
+							svg.append("svg:defs").selectAll("marker")
+								.data(["end"])      // Different link/path types can be defined here
+							  .enter().append("svg:marker")    // This section adds in the arrows
+								.attr("id", String)
+								.attr("viewBox", "0 -5 10 10")
+								.attr("refX", 15)
+								.attr("refY", -1.5)
+								.attr("markerWidth", 6)
+								.attr("markerHeight", 6)
+								.attr("orient", "auto")
+							  .append("svg:path")
+								.attr("d", "M0,-5L10,0L0,5");
+							
+							reUseConnections = [];
+							//reUseConnections = [{source:1,target: 10, weight: 1}];
+							
+							d3.keys(adjacencyReuse).forEach(function(sourceElement){
+								adjacencyReuse[sourceElement].forEach(function(targetElement){
+									var contentLink = new Object();
+									contentLink.source = dictionaryTopicNameNumber[sourceElement.split(topicFileExtension)[0]];
+									contentLink.target = dictionaryTopicNameNumber[targetElement.split(topicFileExtension)[0]];
+									contentLink.value = 1;
+									
+									reUseConnections.push(contentLink);
+								})
+							});
+							
+							
+							// add the links and the arrows
+							var link2 = svg.append("svg:g").attr("class","all_directed_links").selectAll(".directedLink")
+								.data(reUseConnections)
+								.enter().append("svg:path")
+								//.attr("class", function(d) { return "link " + d.type; })
+								.attr("class", "directedLink")
+								.style("visibility","hidden")
+								.style("stroke",function(d){
+									return "red";
+								})
+								.attr("marker-end", "url(#end)");
+							
+							drag = force.drag();
+							//.on("dragstart",dragInit)
+							//.on("dragend",dragFinish);
+							
+							var node = svg.append("g").attr("class","all_nodes").selectAll(".node")
+								.data(nodes)
+								//.enter().append("circle")
+								.enter().append("path")
+								.attr("class", "node")
+								.attr("d", d3.svg.symbol()
+											.size(function(d,i){
+												return scaleSize(parseInt(topic_length[i][0]));
+											})
+											.type(function(d,i){
+												return d3.svg.symbolTypes[dictionaryTopic[topic_type[i][0]]];
+											})
+								)
+								.attr("transform",function(d){
+									return "translate(" + d.x + "," + d.y + ")";
+								})
+								//.attr("r", function(d,i)
+								.style("fill", function(d,i) { 
+									//return color(dictionaryTopic[topic_type[i][0]]);
+									//return color(dictionaryBook[idBookTopic_name[i][1]]);
+									return color(0);
+								})
+								.call(drag)
+								.on("mousedown",function(d){
+									thisObject.topicClicked(d,d3.event)
+								})
+								.on("mouseup",topicReleased)
+								.on("mouseover",topicHovered)
+								.on("mouseout",topicHoveredEnd);
 
-						force.start();
-						for (var i = 1; i > 0; --i) force.tick();
-						force.stop();
-						
-						/*
-						//This shows a dashboard-type number with the current graph density which perhaps is not very useful
-						initMetrics();
-						*/
-						
-						// if (mostGlobalMax < globalMax){
-							mostGlobalMax = globalMax;
-						// }
-						// if (mostGlobalMin > globalMin){
-							mostGlobalMin = globalMin;
-						// }
-						// if (allFilesLoaded ==1){
-						valueArray.sort()
-						var initialThreshold = valueArray[Math.floor(valueArray.length*initialSparsity)];
-						listenerLinkThresholdSlider(initialThreshold);
-						listenerLinkThresholdValue(initialThreshold);
-						
-						listenerCheckBoxes();
-						
-						readyWithLoading();
-						drawMarkerLegend(listOfUniqueTopics);
-						listenerSearchTopic();
-						
-						// }
-						// else{
-							// allFilesLoaded -=1;
-						// }
+
+							node.append("title")
+								.text(function(d) { return d.name;});
+
+							force.on("tick", function() {
+								node.attr("transform", function(d) {
+									d.x = d3.max([d3.min([d.x,width-20]),20]);
+									d.y = d3.max([d3.min([d.y,height-20]),20]);
+									return "translate(" + d.x + "," + d.y + ")"; });
+									
+								link.attr("x1", function(d) { return d.source.x; })
+									.attr("y1", function(d) { return d.source.y; })
+									.attr("x2", function(d) { return d.target.x; })
+									.attr("y2", function(d) { return d.target.y; });
+									
+								link2.attr("d", function(d) {
+									var dx = nodes[d.target].x - nodes[d.source].x,
+										dy = nodes[d.target].y - nodes[d.source].y,
+										dr = Math.sqrt(dx * dx + dy * dy);
+									
+									return "M" + 
+										nodes[d.source].x + "," + 
+										nodes[d.source].y + "A" + 
+										dr + "," + dr + " 0 0,1 " + 
+										nodes[d.target].x + "," + 
+										nodes[d.target].y;
+								});
+								
+							});
+
+							force.start();
+							for (var i = 1; i > 0; --i) force.tick();
+							force.stop();
+							
+							/*
+							//This shows a dashboard-type number with the current graph density which perhaps is not very useful
+							initMetrics();
+							*/
+							
+							// if (mostGlobalMax < globalMax){
+								mostGlobalMax = globalMax;
+							// }
+							// if (mostGlobalMin > globalMin){
+								mostGlobalMin = globalMin;
+							// }
+							// if (allFilesLoaded ==1){
+							valueArray.sort()
+							var initialThreshold = valueArray[Math.floor(valueArray.length*initialSparsity)];
+							listenerLinkThresholdSlider(initialThreshold);
+							listenerLinkThresholdValue(initialThreshold);
+							
+							listenerCheckBoxes();
+							listenerOverlayCheckBox();
+							
+							readyWithLoading();
+							drawMarkerLegend(listOfUniqueTopics);
+							listenerSearchTopic();
+							
+							// }
+							// else{
+								// allFilesLoaded -=1;
+							// }
+						});
 					});
 				});
 			});
@@ -476,6 +552,10 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		
 		var node = svg.selectAll(".node");
 		
+		// add the links and the arrows
+		var link2 = svg.selectAll(".all_directed_links").selectAll(".directedLink")
+			.data(reUseConnections);
+
 		force.on("tick", function() {
 				//node.attr("cx", function(d) { return d.x = d3.max([d3.min([d.x,width-20]),20]); })
 					//.attr("cy", function(d) { return d.y = d3.max([d3.min([d.y,height-20]),20]); })
@@ -488,7 +568,21 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 					.attr("y1", function(d) { return d.source.y; })
 					.attr("x2", function(d) { return d.target.x; })
 					.attr("y2", function(d) { return d.target.y; });
+					
+				link2.attr("d", function(d) {
+					var dx = nodes[d.target].x - nodes[d.source].x,
+						dy = nodes[d.target].y - nodes[d.source].y,
+						dr = Math.sqrt(dx * dx + dy * dy);
+					
+					return "M" + 
+						nodes[d.source].x + "," + 
+						nodes[d.source].y + "A" + 
+						dr + "," + dr + " 0 0,1 " + 
+						nodes[d.target].x + "," + 
+						nodes[d.target].y;
+				});
 			  });
+
 		force.links(currentWeights);
 		//.start();
 
@@ -760,7 +854,7 @@ console.log("topichovEnd")
 	//Add top legend
 	d3.select(legendSelection).text(legendText);
 	
-	drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile);
+	drawGraph(similarityMatrixFile,bookTopicFile,topicTypeFile,topicLengthFile,adjacencyReuseFile);
 }
 
 function listenerLinkThresholdSlider(initValue){
@@ -811,6 +905,13 @@ function listenerLinkThresholdValue(initialValue){
 		elem.filterEdges(parseFloat(initialValue));
 	});
 	*/
+}
+
+function listenerOverlayCheckBox(){
+	d3.select("#chkboxOverlay")
+	.on("change", function(){
+		overlayReuse(this.checked);
+	});
 }
 
 function listenerCheckBoxes(){
@@ -1077,28 +1178,38 @@ function readInput(){
 		else{
 			alert('Wrong input');
 		}
-		obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"), subDir + 'simMatrix_' + similarity + '_thres5_aggregmax_normFunzScore_normRefmatrix',subDir + 'idBookTopic', subDir + 'topicLabels', subDir + 'topicLengths',"#legendFirstColumn","Topic Similarity");
+		obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"), subDir + 'simMatrix_' + similarity + '_thres5_aggregmax_normFunzScore_normRefmatrix',subDir + 'idBookTopic', subDir + 'topicLabels', subDir + 'topicLengths', subDir + "nameconrefId", "#legendFirstColumn", "Topic Similarity");
 	}
 	else{
 		alert('Wrong input');
 	}
-	
+}
+
+
+
+function overlayReuse(makeVisible){
+	if (makeVisible){
+		d3.selectAll(".directedLink").style("visibility","visible");
+	}
+	else{
+		d3.selectAll(".directedLink").style("visibility","hidden");
+	}
 }
 
 function graphHelp(){
-	d3.select("#help").html("Topic similarity graph: shift-click on a topic to focus on its most similar topics. Shift-click again for undoing the focusing.")
+	d3.select("#help").html("Topic similarity graph: <ul><li>Each marker represents a topic. </li><li>The proximity and thickness of edges represent the pairwise similarity between topics. </li><li>Shift-click on a topic to focus on its most similar topics. Shift-click again for undoing the focusing.</li><li>The overlay conref reuse checkbox allows identifying existing conref reuse cases.</li></ul>")
 }
 function thresholdHelp(){
-	d3.select("#help").html("Similarity threshold: adjust the threshold to reduce or increase the number of similarity relationships to be shown. A value of 0 represents an average similarity value.")
+	d3.select("#help").html("Similarity threshold: <ul><li>Adjust the threshold to reduce or increase the number of similarity relationships to be shown. </li><li>A value of 0 represents an average similarity value.</li></ul>")
 }
 function checkboxHelp(){
-	d3.select("#help").html('Size checkbox: turns on/off whether the marker size in the graph is proportional to topic length or not.<br>Marker checkbox: turns on/off whether the marker shape in the graph is associated to the topic type or not.<br> Click "Compare" to see visualize the text of a topic with those of their closest neighbors (there must be only a single topic connected to one or more topics).')
+	d3.select("#help").html('Size checkbox: <ul><li>Turns on/off whether the marker size in the graph is proportional to topic length or not.</li></ul>Marker checkbox: <ul><li>Turns on/off whether the marker shape in the graph is associated to the topic type or not.</li><li>Click "Compare" to see visualize the text of a topic with those of their closest neighbors (there must be only a single topic connected to one or more topics).</li></ul>')
 }
 function topicTypeHelp(){
-	d3.select("#help").html("Topic type checkboxes: forces connections in the graph to be between checked topic types only.")
+	d3.select("#help").html("Topic type checkboxes: <ul><li>Forces connections in the graph to be between checked topic types only.</li></ul>")
 }
 function topicSearchHelp(){
-	d3.select("#help").html("Topic search: enter a query and press <Tab> to retrieve topics containing the entered string. Hover the mouse over the table to identify the topic in the graph.")
+	d3.select("#help").html("Topic search: <ul><li>Enter a query and press &lt;Tab&gt; to retrieve topics containing the entered string. </li><li>Hover the mouse over the table to identify the topic in the graph.</li></ul>")
 }
 
 //var obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"),'simMat.csv','topicNames.csv','topicTypes.csv','topicLengths.csv',"#legendFirstColumn","Topic Similarity");
