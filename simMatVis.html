@@ -32,7 +32,7 @@
 			<tr>
 				<td id="svgMethodA_metrics">
 				<input type="checkbox" id="chkboxOverlay">Overlay conref reuse
-				<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="graphHelp()">
+				<input style="float:right;" type=image src="./Images/help.png" width="25" height="25" onclick="graphHelp()">
 				</td>
 			</tr>
 			<tr>
@@ -50,20 +50,20 @@
 				<td>
 				Similarity threshold
 				<input type="range" id="linkThresholdSlider" min="0" max="100" step="2.5" value="0">
-				<input id="linkThresholdValue" type="number" min="0" max="1" step="any">
-				<input type=image src="./images/help.png" width="25" height="25" onclick="thresholdHelp()">
+				<!--input id="linkThresholdValue" type="number" min="-100" max="100" step="any"-->
+				<input type=image src="./Images/help.png" width="25" height="25" onclick="thresholdHelp()">
 				</td>
 				<td>
 				<input style="visibility:hidden" type="checkbox" id="chkboxColor" ><!--Color based on book--><br> 
-				<input type="checkbox" id="chkboxSize" checked>Size based on length <br>
+				<input type="checkbox" id="chkboxSize" checked>Marker size based on length <br>
 				<input type="checkbox" id="chkboxMarker" checked>Marker based on topic type
-				<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="checkboxHelp()">
+				<input style="float:right;" type=image src="./Images/help.png" width="25" height="25" onclick="checkboxHelp()">
 				</td>
 			</tr>
 			<tr>
 				<td>
 					Allowed topic-type connections
-					<input type=image src="./images/help.png" width="25" height="25" onclick="topicTypeHelp()">
+					<input type=image src="./Images/help.png" width="25" height="25" onclick="topicTypeHelp()">
 				</td>
 				<td>
 					<button type="button" onclick="callTextComparison()">Compare</button>
@@ -82,7 +82,7 @@
 			<tr>
 				<td>
 					<textarea id="searchTopic" name="annotationEntry" cols="35" rows="1" placeholder = 'Search topic'></textarea>
-					<input style="float:right;" type=image src="./images/help.png" width="25" height="25" onclick="topicSearchHelp()">
+					<input style="float:right;" type=image src="./Images/help.png" width="25" height="25" onclick="topicSearchHelp()">
 				</td>
 			</tr>
 			<tr>
@@ -94,12 +94,17 @@
 		</td>
 	</tr>
 </table>
+<fieldset style="width:40%; margin-left:8px;">
 <table>
+	<tr><td><b>Help:</b> (click on the question mark icons to get more information about the panel)
+		</td>
+	</tr>
 	<tr>
 		<td id="help">
 		</td>
 	</tr>
 </table>
+</fieldset>
 <script src="./d3.v3.min.js"></script>
 <script src="./simMatVis.js"></script>
 <script src="./table.js"></script>

@@ -57,14 +57,17 @@
 	color: lightblue;
 }
 
-#tableTextContext .bodyTable tr.selected td{ 
+
+*/
+
+ .bodyTable tr.selected td{ 
+	color: red;
+}
+
+.bodyTable tr.unselected td{ 
 	color: black;
 }
 
-#tableTextContext .bodyTable tr.unselected td{ 
-	color: lightgray;
-}
-*/
 .bodyTable td.Id {
 	width: 10%;
 	text-align: center;

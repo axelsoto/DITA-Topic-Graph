@@ -7,3 +7,13 @@ format ('ttf');
 .sparsityNumber{
 font-family:digital-7;
 }
+
+fieldset {   
+  -moz-border-radius:10px;  
+  border-radius: 10px;  
+  -webkit-border-radius: 10px; //edit :D
+}
+
+#help{
+ color: blue;
+}

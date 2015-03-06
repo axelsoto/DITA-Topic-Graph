@@ -42,11 +42,12 @@ function drawTable(data, tableid, dimensions, valueFunc, textFunc, clusterFunc, 
                 if (metricAscending) sort = sortValueAscending;
                 else sort = sortValueDescending;
                 metricAscending = !metricAscending;
-            } else if(d === columns[1]) {
+            /*} else if(d === columns[1]) {
                 if (nameAscending) sort = sortNameAscending;
                 else sort = sortNameDescending;
                 nameAscending = !nameAscending;
-            } else if(d === columns[2]) {
+            } else if(d === columns[2]) {*/
+            } else if(d === columns[1]) {
                 if (clusterAscending) sort = sortClusterAscending;
                 else sort = sortClusterDescending;
                 clusterAscending = !clusterAscending;
@@ -64,10 +65,27 @@ function drawTable(data, tableid, dimensions, valueFunc, textFunc, clusterFunc, 
     // Create a row for each object in the data 
 	
 		//If we want documents to be initially sorted add ".sort(sortValueAscending)" after data(data)!
-    var rows = d3.select(tableid).select(".tbodyToReplace").selectAll("tr").data(data).attr("class","unselected");
+    var rows = d3.select(tableid).select(".tbodyToReplace")
+				.selectAll("tr")
+				.data(data)
+				.attr("class",function(d){
+					if (obj1.isNodeClicked(d.docId)){
+						return "selected";
+					}
+					else{
+						return "unselected"
+					}
+				});
 	
 	var newRows = rows.enter().append("tr")
-	.attr("class","unselected") 
+	.attr("class",function(d){
+					if (obj1.isNodeClicked(d.docId)){
+						return "selected";
+					}
+					else{
+						return "unselected"
+					}
+				})
 	.style("cursor","pointer")
 	.on("mouseover", function (d,i){
 		drawBigHighlightedElement(obj1, valueFunc(d));
@@ -141,9 +159,12 @@ function drawTable(data, tableid, dimensions, valueFunc, textFunc, clusterFunc, 
 		.attr("class",function(d){
 		return d.column.slice(0,3);})
 		.html(function (d) {
-			if (d.column === columns[1]) return d.text;
+			/*if (d.column === columns[1]) return d.text;
 			else if (d.column === columns[0]) return d.value;
-			else if (d.column === columns[2]) return d.cluster;
+			else if (d.column === columns[2]) return d.cluster;*/
+			if (d.column === columns[0]) return d.value;
+			else if (d.column === columns[1]) return d.cluster;
+			//else if (d.column === columns[2]) return d.cluster;
 		});
 		
 		newCells.enter()
@@ -151,9 +172,11 @@ function drawTable(data, tableid, dimensions, valueFunc, textFunc, clusterFunc, 
 		.attr("class",function(d){
 		return d.column.slice(0,3);})
 		.html(function (d) {
-			if (d.column === columns[1]) return d.text;
+			/*if (d.column === columns[1]) return d.text;
 			else if (d.column === columns[0]) return d.value;
-			else if (d.column === columns[2]) return d.cluster;
+			else if (d.column === columns[2]) return d.cluster;*/
+			if (d.column === columns[0]) return d.value;
+			else if (d.column === columns[1]) return d.cluster;
 		});
 		newCells.exit().remove();   
 }

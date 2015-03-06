@@ -83,6 +83,15 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		nClickedNodes++;
 	}*/
 	
+	this.isNodeClicked = function(index){
+		if (nodeClicked[index]){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
 	this.shiftClickNode = function(index){
 		nClickedNodes++;
 		nodeClicked[index] = true;
@@ -318,7 +327,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							valueArray.sort()
 							var initialThreshold = valueArray[Math.floor(valueArray.length*initialSparsity)];
 							listenerLinkThresholdSlider(initialThreshold);
-							listenerLinkThresholdValue(initialThreshold);
+							//listenerLinkThresholdValue(initialThreshold);
 							
 							listenerCheckBoxes();
 							listenerOverlayCheckBox();
@@ -326,6 +335,9 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							readyWithLoading();
 							drawMarkerLegend(listOfUniqueTopics);
 							listenerSearchTopic();
+							
+							//Add book topic to top legend
+							d3.select(legendSelection).text(d3.select(legendSelection).text()+ " " + idBookTopic_name[0][1]);
 							
 							// }
 							// else{
@@ -615,11 +627,13 @@ console.log("topichovEnd")
 				//unstrokeNode(d.index);
 				nClickedNodes = nClickedNodes - 1;
 				nodeClicked[d.index] = false;
+				unhighlightTableRow(d.index);
 			}
 			else{
 				//strokeNode(d.index);
 				nClickedNodes = nClickedNodes + 1;
 				nodeClicked[d.index] = true;
+				highlightTableRow(d.index);
 			}
 			thisObject.filterEdges(currentThreshold);
 			//dehighlightNeighbors(d,this);
@@ -845,7 +859,7 @@ console.log("topichovEnd")
 		indices = d3.range(allNodes.length);
 		indices.sort(function (a, b) { return allValues[a] < allValues[b] ? 1 : allValues[a] > allValues[b] ? -1 : 0; });
 		
-		for (var q=0;q<d3.max([maxNeighbors,allNodes.length]);q++){
+		for (var q=0;q<d3.min([maxNeighbors,allNodes.length]);q++){
 			output.listOfNeighbors.push(allNodes.slice(indices[q], indices[q] + 1));
 		}
 		return output;
@@ -864,7 +878,8 @@ function listenerLinkThresholdSlider(initValue){
 					.range([parseFloat(mostGlobalMin),parseFloat(mostGlobalMax)]);
 	
 	//Set threshold value to initValue in the text area
-	d3.select("#linkThresholdValue")[0][0].value = parseFloat(initValue).toFixed(4);
+	//d3.select("#linkThresholdValue")[0][0].value = parseFloat(initValue).toFixed(4);
+	
 	//Set threshold value to initValue in the slider
 	d3.select("#linkThresholdSlider")[0][0].value = scaleLinkThreshold.invert(initValue);
 	
@@ -884,11 +899,14 @@ function listenerLinkThresholdSlider(initValue){
 			});
 		
 		//Set threshold value in the text area
-		d3.select("#linkThresholdValue")[0][0].value = parseFloat(scaleLinkThreshold(linkThresholdSliderValue)).toFixed(4);
+		//d3.select("#linkThresholdValue")[0][0].value = parseFloat(scaleLinkThreshold(linkThresholdSliderValue)).toFixed(4);
 	});
 }
-function listenerLinkThresholdValue(initialValue){
+function listenerLinkThresholdValue(initialValue,globalMin,globalMax){
+	
 	d3.select("#linkThresholdValue")
+	.attr("min", mostGlobalMin)
+	.attr("max", mostGlobalMax)
 	.on("change", function(){
 		var value = parseFloat(this.value);
 		//if ((value<=1)&&(value>0)){
@@ -996,7 +1014,8 @@ function listenerSearchTopic(){
 			}
 		});
 		//Use table to show these results and when hovered they can be highlighted in the scatterplot, and when clicked should be similar to clicking on the node
-		var columns = ["Id", "Book name", "Topic name"];
+		//var columns = ["Id", "Book name", "Topic name"];
+		var columns = ["Id", "Topic name"];
 		data = generateJSONdata(listMatchesIndex,"")
 		addDataToTable(data,columns)
 	}
@@ -1096,7 +1115,7 @@ function callTextComparison(){
 			alert('Similarity not known')
 		}
 		
-		var win = window.open('../Visualization/multiple.html?book='+ book + ',topic=' + centerNeighbors.center + ",neighbors=" + stringOfNeighbors + ',similarity=' + similarity, '_blank');
+		var win = window.open('../DITA-one-on-many-comparison/multiple.html?book='+ book + ',topic=' + centerNeighbors.center + ",neighbors=" + stringOfNeighbors + ',similarity=' + similarity, '_blank');
 		win.focus();
 	}
 }
@@ -1107,6 +1126,14 @@ function removeBigHighlightedElement(obj,index){
 			obj.dehighlightNeighbors(d,this);
 		}
 	});
+}
+
+function highlightTableRow(index){
+	d3.select(".tbodyToReplace").selectAll("tr").filter(function(d){if (d.docId==index) return true;}).attr("class","selected");
+}
+
+function unhighlightTableRow(index){
+	d3.select(".tbodyToReplace").selectAll("tr").filter(function(d){if (d.docId==index) return true;}).attr("class","unselected");
 }
 
 function rowClicked(obj,index,event){
@@ -1128,7 +1155,12 @@ function readyWithLoading(){
 	var patternToFind = /topic=\d+/;
 	if (patternToFind.test(window.location.href)){
 		var topicIndex = parseInt(patternToFind.exec(window.location.href)[0].split("=")[1]);
-		startingFromATopic(obj1,topicIndex);
+		if (topicIndex==-1){
+			obj1.filterEdges(obj1.getCurrentThreshold());
+		}
+		else{
+			startingFromATopic(obj1,topicIndex);
+		}
 	}
 	else{
 		obj1.filterEdges(obj1.getCurrentThreshold());
