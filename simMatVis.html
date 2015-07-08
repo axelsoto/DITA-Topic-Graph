@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<!--script src="./jquery-1.8.2.min.js"></script-->
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.3/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
 <style>
 
 .node {
@@ -48,8 +52,8 @@
 			<table cellspacing="1" cellpadding="1" class="tableB" style="width:100%">
 			<tr>
 				<td>
-				Similarity threshold
-				<input type="range" id="linkThresholdSlider" min="0" max="100" step="2.5" value="0">
+				Similarity <span id="minusSign" style="margin-left:30px">-</span><span id="pluSign" style="margin-left:110px">+</span><br>threshold
+				<input type="range" id="linkThresholdSlider" min="0" max="100" step="2.5" value="0" style="margin-left:30px">
 				<!--input id="linkThresholdValue" type="number" min="-100" max="100" step="any"-->
 				<input type=image src="./Images/help.png" width="25" height="25" onclick="thresholdHelp()">
 				</td>
@@ -57,13 +61,13 @@
 				<input style="visibility:hidden" type="checkbox" id="chkboxColor" ><!--Color based on book--><br> 
 				<input type="checkbox" id="chkboxSize" checked>Marker size based on length <br>
 				<input type="checkbox" id="chkboxMarker" checked>Marker based on topic type
-				<input style="float:right;" type=image src="./Images/help.png" width="25" height="25" onclick="checkboxHelp()">
+				<input style="float: right;" type=image src="./Images/help.png" width="25" height="25" onclick="checkboxHelp()">
 				</td>
 			</tr>
 			<tr>
 				<td>
 					Allowed topic-type connections
-					<input type=image src="./Images/help.png" width="25" height="25" onclick="topicTypeHelp()">
+					<input type=image src="./Images/help.png" width="25" height="25" onclick="topicTypeHelp()" style="margin-left:20px">
 				</td>
 				<td>
 					<button type="button" onclick="callTextComparison()">Compare</button>
@@ -96,7 +100,7 @@
 </table>
 <fieldset style="width:40%; margin-left:8px;">
 <table>
-	<tr><td><b>Help:</b> (click on the question mark icons to get more information about the panel)
+	<tr><td id="introHelp"><b>Help:</b> (click on the question mark icons to get more information about the panel)
 		</td>
 	</tr>
 	<tr>
@@ -105,10 +109,15 @@
 	</tr>
 </table>
 </fieldset>
+
+<div id="dialog" title="Basic dialog">
+  <p></p>
+</div>
+
 <script src="./d3.v3.min.js"></script>
 <script src="./simMatVis.js"></script>
 <script src="./table.js"></script>
-<script src="./jquery-1.8.2.min.js"></script>
+
 <link href="./table.css" rel="stylesheet" type="text/css">
 <!--script type="text/javascript" src="./d3-cloud-master/d3.layout.cloud.js"></script-->
 <link rel="stylesheet" type="text/css" href="styles.css">

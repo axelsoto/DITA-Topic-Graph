@@ -11,6 +11,8 @@ var heightTable = 270;
 
 var topicFileExtension = ".dita";
 
+tutorialMode = false;
+
 String.prototype.trim = function() {
 return this.replace(/^\s*|\s*$/g, "")
 }
@@ -244,9 +246,9 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 								})
 								.attr("marker-end", "url(#end)");
 							
-							drag = force.drag();
+							drag = force.drag()
 							//.on("dragstart",dragInit)
-							//.on("dragend",dragFinish);
+							.on("dragend",dragFinish);
 							
 							var node = svg.append("g").attr("class","all_nodes").selectAll(".node")
 								.data(nodes)
@@ -343,11 +345,29 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 							// else{
 								// allFilesLoaded -=1;
 							// }
+							
+							if (tutorialMode == 1){
+								alert("Welcome! We will guide you through the main components of this visualization (click ok & follow the steps and please don't disable the dialogs)");
+								alert("The table below contains all the topics of this book");
+								alert("The network on the left uses different markers to represent the same set of topics. There is a connection for each pair of topics representing their pairwise similarity");
+								alert("Hover over a marker to know its corresponding topic and click and drag it to better organize the topics in the screen");
+								d3.select("#introHelp").style("visibility","hidden");
+								writeHelp("<span style='color:red'>Hover over a marker and click and drag it</span>");
+								tutorialMode++;
+							}
 						});
 					});
 				});
 			});
 		});
+	}
+	
+	function dragFinish(){
+		if (tutorialMode==2){
+			alert("At the beginning we have too many links, so drag the slider (labeled as 'Similarity Threshold') slightly to the right to find topics that are more related between each other");
+			writeHelp("<span style='color:red'>Drag the slider (labeled as 'Similarity Threshold') slightly to the right</span>");
+			tutorialMode++;
+		}
 	}
 	
 	function drawMarkerLegend(listOfTopics){
@@ -365,6 +385,12 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 								if (allowedConnections[d]){
 									opacityCheckMark(i,0);
 									allowedConnections[d]=false;
+									if ((tutorialMode==6)&&(!allowedConnections.concept)&&(!allowedConnections.topic)&&(!allowedConnections.reference)&&(allowedConnections.task)){
+										alert("Now only links between task topics exist");
+										alert("Find Topic 13 (cordap_tk_change-driver-adding) either in the graph or in the table and shift-click on it");
+										writeHelp("<span style='color:red'>Shift-click on Topic 13 (in the graph or in the table)</span>");
+										tutorialMode++;
+									}
 								}
 								else{
 									opacityCheckMark(i,1);
@@ -416,6 +442,11 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 								if (allowedConnections[d]){
 									opacityCheckMark(i,0);
 									allowedConnections[d]=false;
+									if ((tutorialMode==6)&&(!allowedConnections.concept)&&(!allowedConnections.topic)&&(!allowedConnections.reference)&&(allowedConnections.task)){
+										alert("Find Topic 13 (cordap_tk_change-driver-adding) either in the graph or in the table and shift-click on it");
+										writeHelp("<span style='color:red'>Shift-click on Topic 13 (in the graph or in the table)</span>");
+										tutorialMode++;
+									}
 								}
 								else{
 									opacityCheckMark(i,1);
@@ -606,7 +637,7 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 		//This shows a dashboard-type number with the current graph density which perhaps is not very useful
 		updateMetrics();
 		*/
-
+		
 	}
 
 
@@ -615,7 +646,6 @@ function drawSimilarityGraph(graphSelection,metricsSelection,wordCloudSelection,
 	}
 
 	function topicHoveredEnd(d){
-console.log("topichovEnd")
 		thisObject.dehighlightNeighbors(d,this);
 	}
 
@@ -638,7 +668,14 @@ console.log("topichovEnd")
 			thisObject.filterEdges(currentThreshold);
 			//dehighlightNeighbors(d,this);
 		}
+		if ((tutorialMode==7)&&(nodeClicked[13])){
+			alert("Shift-clicking allows focusing on topic 13 and its similarity to other topics");
+			alert("Finally, if you want to check how topic 13 differs with regard to other task topics or whether any content here could be reused from an existing topic, you need to visualize the text. Click the grey button 'Compare' on the right. Feel free to adjust the similarity threshold and the 'allowed-type connections' checkboxes.")
+			writeHelp("<span style='color:red'>Adjust threshold and checkboxes as needed. Then press the 'Compare' button</span>");
+			tutorialMode++;
+		}
 	}
+	
 	this.highlightNeighbors = function(d,context){
 	//function highlightNeighbors(d,context){
 		currentNeighbors = [];
@@ -852,7 +889,15 @@ console.log("topichovEnd")
 				}
 			}
 			allValues.push(elem.value);
-		})
+		});
+		if ((!output.error)&&(output.center== -99)){
+			if (nodeClicked[allNodes[0]]){
+				output.center = allNodes[0];
+			}
+			else{
+				output.center = allNodes[1];
+			}
+		}
 		var indexCenter = allNodes.indexOf(output.center);
 		allNodes.splice(indexCenter,1)
 		
@@ -900,6 +945,18 @@ function listenerLinkThresholdSlider(initValue){
 		
 		//Set threshold value in the text area
 		//d3.select("#linkThresholdValue")[0][0].value = parseFloat(scaleLinkThreshold(linkThresholdSliderValue)).toFixed(4);
+		
+		if (tutorialMode==3){
+			alert("We can also overlay existing conref reuses to know what it has been already reused. Check the box in the lower left corner ('Overlay conref reuse')");
+			writeHelp("<span style='color:red'>Click the overlay conref reuse checkbox</span>");
+			tutorialMode++;
+		}
+		if (tutorialMode==5){
+			alert("Now, assume you have to modify Topic 13 (a task type of topic), but you would like to check first how this topic relates to others")
+			alert("Let's assume you are only interested in task topics. Therefore, uncheck everything but 'Task' in the checkboxes under 'Allowed type connections'");
+			writeHelp("<span style='color:red'>Uncheck all topic-types under 'Allowed type connections' but 'Task'</span>");
+			tutorialMode++;
+		}
 	});
 }
 function listenerLinkThresholdValue(initialValue,globalMin,globalMax){
@@ -929,6 +986,13 @@ function listenerOverlayCheckBox(){
 	d3.select("#chkboxOverlay")
 	.on("change", function(){
 		overlayReuse(this.checked);
+		if (tutorialMode==4){
+			alert("Not surprisingly, some of the existing conref reuse links (in red) coincide with the similarity links");
+			alert("Move the similarity threshold back to the left");
+			writeHelp("<span style='color:red'>Move similarity threshold to the left</span>");
+			
+			tutorialMode++;
+		}
 	});
 }
 
@@ -1115,6 +1179,12 @@ function callTextComparison(){
 			alert('Similarity not known')
 		}
 		
+		if (tutorialMode==8){
+			alert("Well done! This is the end of this tutorial. You can restart it by reloading the page. The question mark icons provide further information on different components. You can close this page and the new page with the text comparison that will open on a new tab (we will come back to this new visualization later) and go back to the survey.")
+			writeHelp("");
+			d3.select("#introHelp").style("visibility","visible");
+		}
+		
 		var win = window.open('../DITA-one-on-many-comparison/multiple.html?book='+ book + ',topic=' + centerNeighbors.center + ",neighbors=" + stringOfNeighbors + ',similarity=' + similarity, '_blank');
 		win.focus();
 	}
@@ -1180,6 +1250,11 @@ function readInput(){
 		similarity = 'None'
 	}
 	
+	var patternToFind3 = /tutorial/;
+	if (patternToFind3.test(window.location.href)){
+		tutorialMode = 1;
+	}
+	
 	if (patternToFind.test(window.location.href)){
 		var subDir = './Data/';
 		if (patternToFind.exec(window.location.href)[1]=='VSP4000'){
@@ -1189,17 +1264,17 @@ function readInput(){
 			
 		}
 		else if (patternToFind.exec(window.location.href)[1]=='CORDAPContentDeveloper'){
-			subDir = subDir + 'CORDAPContDev/'
+			subDir = subDir + 'CORDAPContentDeveloper/'
 			
 		}
 		else if (patternToFind.exec(window.location.href)[1]=='CORDAPProductOwner'){
-			
+			subDir = subDir + 'CORDAPProductOwner/'
 		}
 		else if (patternToFind.exec(window.location.href)[1]=='CORDAPReviewer'){
-			
+			subDir = subDir + 'CORDAPReviewer/'
 		}
 		else if (patternToFind.exec(window.location.href)[1]=='CORDAPSystemAdmin'){
-			
+			subDir = subDir + 'CORDAPSystemAdmin/'
 		}
 		else if (patternToFind.exec(window.location.href)[1]=='Movious'){
 			
@@ -1210,7 +1285,7 @@ function readInput(){
 		else{
 			alert('Wrong input');
 		}
-		obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"), subDir + 'simMatrix_' + similarity + '_thres5_aggregmax_normFunzScore_normRefmatrix',subDir + 'idBookTopic', subDir + 'topicLabels', subDir + 'topicLengths', subDir + "nameconrefId", "#legendFirstColumn", "Topic Similarity");
+		obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"), subDir + 'simMatrix_' + similarity + '_thres4_aggregmax_normFunzScore_normRefmatrix',subDir + 'idBookTopic', subDir + 'topicLabels', subDir + 'topicLengths', subDir + "nameconrefId", "#legendFirstColumn", "Topic Similarity");
 	}
 	else{
 		alert('Wrong input');
@@ -1229,19 +1304,46 @@ function overlayReuse(makeVisible){
 }
 
 function graphHelp(){
-	d3.select("#help").html("Topic similarity graph: <ul><li>Each marker represents a topic. </li><li>The proximity and thickness of edges represent the pairwise similarity between topics. </li><li>Shift-click on a topic to focus on its most similar topics. Shift-click again for undoing the focusing.</li><li>The overlay conref reuse checkbox allows identifying existing conref reuse cases.</li></ul>")
-}
+	var content = "<ul><li>Each marker represents a topic. </li><li>The proximity and thickness of edges represent the pairwise similarity between topics. </li><li>Shift-click on a topic to focus on its most similar topics. Shift-click again for undoing the focusing.</li><li>The overlay conref reuse checkbox allows identifying existing conref reuse cases.</li></ul>";
+	var title = "Topic Similarity Graph";
+	writeNewDialog(title,content,[]);
+	}
 function thresholdHelp(){
-	d3.select("#help").html("Similarity threshold: <ul><li>Adjust the threshold to reduce or increase the number of similarity relationships to be shown. </li><li>A value of 0 represents an average similarity value.</li></ul>")
+	var content = "<ul><li>Adjust the threshold to reduce or increase the number of similarity relationships to be shown. </li><li>The middle position of the slider represents the average similarity value.</li></ul>";
+	var title = "Similarity Threshold";
+	writeNewDialog(title,content,[]);
 }
 function checkboxHelp(){
-	d3.select("#help").html('Size checkbox: <ul><li>Turns on/off whether the marker size in the graph is proportional to topic length or not.</li></ul>Marker checkbox: <ul><li>Turns on/off whether the marker shape in the graph is associated to the topic type or not.</li><li>Click "Compare" to see visualize the text of a topic with those of their closest neighbors (there must be only a single topic connected to one or more topics).</li></ul>')
+	var content = 'Size checkbox: <ul><li>Turns on/off whether the marker size in the graph is proportional to topic length or not.</li></ul>Marker checkbox: <ul><li>Turns on/off whether the marker shape in the graph is associated to the topic type or not.</li></ul>Compare button: <ul><li>Click "Compare" to visualize the text of a topic with those of their closest neighbors (there must be only a single topic connected to one or more topics).</li></ul>';
+	var title = "Markers / Compare";
+	writeNewDialog(title,content,[]);
 }
 function topicTypeHelp(){
-	d3.select("#help").html("Topic type checkboxes: <ul><li>Forces connections in the graph to be between checked topic types only.</li></ul>")
+	var content = "<ul><li>Forces connections in the graph to be between checked topic types only.</li></ul>";
+	var title = "Topic Type Connections";
+	writeNewDialog(title,content,[]);
 }
 function topicSearchHelp(){
-	d3.select("#help").html("Topic search: <ul><li>Enter a query and press &lt;Tab&gt; to retrieve topics containing the entered string. </li><li>Hover the mouse over the table to identify the topic in the graph.</li></ul>")
+	var content = "<ul><li>Enter a query and press &lt;Tab&gt; to retrieve topics containing the entered string. </li><li>Hover the mouse over the table to identify the topic in the graph.</li></ul>";
+	var title = "Topic Search";
+	writeNewDialog(title,content,[]);
+}
+function writeHelp(text){
+	d3.select("#help").html(text);
+}
+
+function writeNewDialog(dialogTitle,text,list){
+	d3.select("#dialog").select("p").html(text);
+	$("#dialog").dialog({
+		width: 400,
+		title: dialogTitle,
+		close: function(e,ui){
+			if (list.length>0){
+				writeNewDialog(list[0].title,list[0].text,list.slice(1));
+			}
+			
+		}
+	});
 }
 
 //var obj1 = new drawSimilarityGraph(d3.select("#svgMethodA"),d3.select("#svgMethodA_metrics"),d3.select("#svgMethodA_wordCloud"),'simMat.csv','topicNames.csv','topicTypes.csv','topicLengths.csv',"#legendFirstColumn","Topic Similarity");
